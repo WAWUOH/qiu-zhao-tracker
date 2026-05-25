@@ -1307,7 +1307,7 @@
                         <th class="sortable" onclick="setSort('city')" id="th-city">城市 <span class="sort-arrow"></span></th>
                         <th class="sortable" onclick="setSort('status')" id="th-status">状态 <span class="sort-arrow"></span></th>
                         <th class="sortable" onclick="setSort('date')" id="th-date">投递日期 <span class="sort-arrow"></span></th>
-                        <th>面试时间</th>
+                        <th class="sortable" onclick="setSort('interviewDate')" id="th-interviewDate">面试时间 <span class="sort-arrow"></span></th>
                         <th>内推码</th>
                         <th>操作</th>
                     </tr>
@@ -1911,9 +1911,10 @@
                         vb = order.indexOf(b.status);
                         return sortDir === 'asc' ? va - vb : vb - va;
                     case 'date':
+                    case 'interviewDate':
                     default:
-                        va = new Date(a.date || 0);
-                        vb = new Date(b.date || 0);
+                        va = new Date(a[sortField] || 0);
+                        vb = new Date(b[sortField] || 0);
                         return sortDir === 'asc' ? va - vb : vb - va;
                 }
             });
@@ -2310,7 +2311,7 @@
                 sortDir = sortDir === 'asc' ? 'desc' : 'asc';
             } else {
                 sortField = field;
-                sortDir = field === 'date' ? 'desc' : 'asc';
+                sortDir = (field === 'date' || field === 'interviewDate') ? 'desc' : 'asc';
             }
             render();
         }
