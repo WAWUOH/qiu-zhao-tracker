@@ -2009,7 +2009,7 @@
             
             div.innerHTML = `
                 <div class="card-actions">
-                    ${job.link ? `<a href="${escapeHtml(job.link)}" target="_blank" class="icon-btn" title="打开JD链接" onclick="event.stopPropagation()" style="text-decoration:none;">🔗</a>` : ''}
+                    ${job.link ? `<a href="${job.link.replace(/"/g, '&quot;')}" target="_blank" class="icon-btn" title="打开JD链接" onclick="event.stopPropagation()" style="text-decoration:none;">🔗</a>` : ''}
                     <button class="icon-btn" onclick="editJob('${job.id}')" title="编辑">✏️</button>
                 </div>
                 <div class="card-company">${escapeHtml(job.company)}</div>
@@ -2022,7 +2022,7 @@
                     ${job.referral ? `<span class="card-tag referral">内推: ${escapeHtml(job.referral)}</span>` : ''}
                     <span class="card-date">${job.date || ''}</span>
                 </div>
-                ${job.link ? `<a href="${escapeHtml(job.link)}" target="_blank" class="card-link-btn" onclick="event.stopPropagation()">📎 查看JD</a>` : ''}
+                ${job.link ? `<a href="${job.link.replace(/"/g, '&quot;')}" target="_blank" class="card-link-btn" onclick="event.stopPropagation()">📎 查看JD</a>` : ''}
                 ${job.notes ? `<div class="card-notes-preview">${escapeHtml(job.notes)}</div>` : ''}
             `;
 
@@ -2041,7 +2041,7 @@
             });
 
             div.addEventListener('click', (e) => {
-                if (touchMoved) return; // Skip click after touch drag
+                if (touchDragged) { touchDragged = false; return; }
                 if (!e.target.closest('.icon-btn') && !e.target.closest('.card-link-btn')) {
                     editJob(job.id);
                 }
@@ -2083,6 +2083,7 @@
         let touchClone = null;
         let touchStartX, touchStartY;
         let touchMoved = false;
+        let touchDragged = false; // persists past touchend to suppress click
 
         function initTouchDrag(cardEl, jobId) {
             cardEl.addEventListener('touchstart', (e) => {
@@ -2141,6 +2142,7 @@
 
                 if (touchClone) {
                     if (touchMoved) {
+                        touchDragged = true;
                         // Detect drop target
                         const touch = e.changedTouches[0];
                         const elUnder = document.elementFromPoint(touch.clientX, touch.clientY);
