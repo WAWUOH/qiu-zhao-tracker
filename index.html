@@ -1,0 +1,2488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>秋招 Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            touch-action: manipulation;
+        }
+
+        :root {
+            --bg: #ffffff;
+            --bg-secondary: #f7f7f7;
+            --bg-hover: #f0f0f0;
+            --border: #e3e3e3;
+            --text: #37352f;
+            --text-secondary: #6b6b6b;
+            --accent: #2eaadc;
+            --accent-hover: #1f9bc7;
+            --shadow: 0 1px 3px rgba(0,0,0,0.04);
+            
+            --status-applied: #e3e3e3;
+            --status-progress: #fdecc8;
+            --status-offer: #dbeddb;
+            --status-rejected: #ffe3e3;
+            --substatus-color: #8b5cf6;
+            --substatus-bg: #f3f0ff;
+        }
+
+        [data-theme="dark"] {
+            --bg: #1a1a1a;
+            --bg-secondary: #141414;
+            --bg-hover: #2a2a2a;
+            --border: #333;
+            --text: #e0e0e0;
+            --text-secondary: #999;
+            --accent: #3cb8e0;
+            --accent-hover: #2eaadc;
+            --shadow: 0 1px 3px rgba(0,0,0,0.2);
+            --status-applied: #333;
+            --status-progress: #3d3520;
+            --status-offer: #1a2e1a;
+            --status-rejected: #3a1a1a;
+            --substatus-bg: #2a2040;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            background: var(--text);
+            color: white;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .stat-num {
+            font-weight: 600;
+            color: var(--text);
+            font-size: 15px;
+        }
+
+        .stat-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text);
+            transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+        }
+
+        .btn:hover {
+            background: var(--bg-hover);
+        }
+
+        .btn-primary {
+            background: var(--text);
+            color: white;
+            border-color: var(--text);
+        }
+
+        .btn-primary:hover {
+            background: #000;
+        }
+
+        .btn-active {
+            background: var(--bg-hover);
+            font-weight: 500;
+        }
+
+        .search-box {
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 13px;
+            width: 200px;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .search-box:focus {
+            border-color: var(--accent);
+        }
+
+        /* Main */
+        .main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* Filter Bar */
+        .filter-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-select {
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+            background: var(--bg);
+            color: var(--text);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .filter-select:focus {
+            border-color: var(--accent);
+        }
+
+        .filter-result {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Sortable headers */
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.15s;
+        }
+
+        .sortable:hover {
+            color: var(--accent);
+        }
+
+        .sort-arrow {
+            font-size: 10px;
+            margin-left: 4px;
+        }
+
+        .sort-arrow.asc::after {
+            content: '▲';
+        }
+
+        .sort-arrow.desc::after {
+            content: '▼';
+        }
+
+        /* Tag colors */
+        .card-tag.industry {
+            background: #e8f0fe;
+            border-color: #b8d4fe;
+            color: #1a6fd1;
+        }
+
+        [data-theme="dark"] .card-tag.industry {
+            background: #1a2a40;
+            border-color: #2a4a70;
+            color: #5a9df0;
+        }
+
+        .card-tag.interview-date {
+            background: #fce4ec;
+            border-color: #f8bbd0;
+            color: #c62828;
+            font-weight: 500;
+        }
+
+        [data-theme="dark"] .card-tag.interview-date {
+            background: #3a1a24;
+            border-color: #5a2a3a;
+            color: #ef5a7a;
+        }
+
+        /* Board View */
+        .board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            align-items: start;
+        }
+
+        .column {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            min-height: 200px;
+        }
+
+        .column-header {
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 73px;
+            background: var(--bg-secondary);
+            border-radius: 8px 8px 0 0;
+            z-index: 10;
+        }
+
+        .column-count {
+            font-size: 11px;
+            padding: 2px 8px;
+            background: var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .column-body {
+            padding: 0 8px 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .column-body.drag-over {
+            background: #efefef;
+            border-radius: 0 0 8px 8px;
+        }
+
+        /* Card */
+        .card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            cursor: grab;
+            transition: all 0.15s;
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+
+        .card:hover {
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            transform: translateY(-1px);
+        }
+
+        .card.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+
+        .card-company {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+            color: var(--text);
+        }
+
+        .card-role {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .card-tag {
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .card-tag.referral {
+            background: #fff9e6;
+            border-color: #ffe08a;
+            color: #b38b00;
+        }
+
+        .card-date {
+            margin-left: auto;
+            font-size: 11px;
+        }
+
+        .card-actions {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: none;
+            gap: 4px;
+        }
+
+        .card:hover .card-actions {
+            display: flex;
+        }
+
+        .icon-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .icon-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text);
+        }
+
+        /* List View */
+        .list-view {
+            display: none;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .list-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .list-table th {
+            text-align: left;
+            padding: 12px 16px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .list-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .list-table tr:hover td {
+            background: var(--bg-secondary);
+        }
+
+        .list-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .status-applied-badge { background: var(--status-applied); color: #6b6b6b; }
+        .status-progress-badge { background: var(--status-progress); color: #946c00; }
+        .status-offer-badge { background: var(--status-offer); color: #2b6e2b; }
+        .status-rejected-badge { background: var(--status-rejected); color: #c0392b; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.3);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 520px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            border: 1px solid var(--border);
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 18px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            background: var(--bg-hover);
+        }
+
+        .modal-body {
+            padding: 20px 24px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            border-color: var(--accent);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .btn-danger {
+            color: #e74c3c;
+        }
+
+        .btn-danger:hover {
+            background: #fdf2f2;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        /* Card enhancements */
+        .card-substatus {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: var(--substatus-bg);
+            color: var(--substatus-color);
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid var(--substatus-color);
+            opacity: 0.7;
+        }
+
+        .card-link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .card-link-btn:hover {
+            background: #e8f6fc;
+        }
+
+        [data-theme="dark"] .card-link-btn:hover {
+            background: #1a3040;
+        }
+
+        .card-notes-preview {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.4;
+            font-style: italic;
+        }
+
+        /* Export dropdown */
+        .export-dropdown {
+            position: relative;
+            display: inline-flex;
+        }
+
+        .export-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 4px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            z-index: 200;
+            min-width: 140px;
+            overflow: hidden;
+        }
+
+        .export-menu.show {
+            display: block;
+        }
+
+        .export-menu-item {
+            display: block;
+            width: 100%;
+            padding: 10px 16px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text);
+            text-align: left;
+            font-family: inherit;
+        }
+
+        .export-menu-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .export-menu-item + .export-menu-item {
+            border-top: 1px solid var(--border);
+        }
+
+        /* Theme toggle */
+        .theme-toggle {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            line-height: 1;
+        }
+
+        .theme-toggle:hover {
+            background: var(--bg-hover);
+        }
+
+        /* Stats View */
+        .stats-view {
+            display: none;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-card-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .stat-card-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .stat-card-sub {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .stats-section {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .stats-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text);
+        }
+
+        /* Bar chart */
+        .bar-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .bar-label {
+            width: 60px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .bar-track {
+            flex: 1;
+            height: 24px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.4s ease;
+            display: flex;
+            align-items: center;
+            padding-left: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #fff;
+            min-width: 0;
+        }
+
+        .bar-fill.applied { background: #9e9e9e; }
+        .bar-fill.progress { background: #f0c040; color: #5c4700; }
+        .bar-fill.offer { background: #4caf50; }
+        .bar-fill.rejected { background: #e57373; }
+
+        /* City ranking */
+        .city-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        .city-row:last-child {
+            border-bottom: none;
+        }
+
+        .city-rank {
+            width: 24px;
+            text-align: center;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .city-name {
+            flex: 1;
+            color: var(--text);
+        }
+
+        .city-count {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .city-bar {
+            width: 120px;
+            height: 6px;
+            background: var(--bg-secondary);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .city-bar-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 3px;
+        }
+
+        /* Monthly trend */
+        .month-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 0;
+            font-size: 13px;
+        }
+
+        .month-label {
+            width: 80px;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+
+        .month-bar {
+            flex: 1;
+            height: 20px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .month-bar-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            padding-left: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #fff;
+            transition: width 0.4s ease;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .board {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            /* Header */
+            .header {
+                padding: 12px 16px;
+            }
+
+            .header-content {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+
+            .logo {
+                font-size: 18px;
+            }
+
+            .stats {
+                gap: 12px;
+                font-size: 12px;
+                justify-content: flex-start;
+                flex-wrap: wrap;
+            }
+
+            .stat-num {
+                font-size: 14px;
+            }
+
+            /* Controls - wrap and prioritize */
+            .controls {
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+
+            .search-box {
+                width: 100%;
+                order: -1;
+                padding: 10px 14px;
+                font-size: 16px; /* Prevent iOS zoom on focus */
+            }
+
+            .btn {
+                padding: 8px 12px;
+                font-size: 13px;
+                min-height: 40px;
+            }
+
+            .btn-primary {
+                order: 100;
+            }
+
+            .theme-toggle {
+                width: 40px;
+                height: 40px;
+            }
+
+            /* Filter bar */
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-group {
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+
+            .filter-select {
+                flex: 1;
+                min-width: 100px;
+                padding: 8px 12px;
+                font-size: 14px;
+                min-height: 40px;
+            }
+
+            /* Board - single column */
+            .board {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .column-header {
+                top: 0;
+                position: relative;
+                font-size: 14px;
+            }
+
+            /* Cards */
+            .card {
+                padding: 14px;
+            }
+
+            .card-company {
+                font-size: 15px;
+            }
+
+            .card-actions {
+                display: flex !important; /* Always visible on touch */
+                gap: 6px;
+            }
+
+            .icon-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 16px;
+            }
+
+            /* List - horizontal scroll */
+            .list-view {
+                border-radius: 12px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .list-table {
+                font-size: 13px;
+                min-width: 750px;
+            }
+
+            .list-table th,
+            .list-table td {
+                padding: 10px 12px;
+            }
+
+            /* Modal - fullscreen */
+            .modal-overlay {
+                padding: 0;
+                align-items: flex-end;
+            }
+
+            .modal {
+                max-width: 100%;
+                max-height: 95vh;
+                border-radius: 16px 16px 0 0;
+                width: 100%;
+            }
+
+            .modal-header {
+                padding: 16px 20px;
+            }
+
+            .modal-title {
+                font-size: 17px;
+            }
+
+            .modal-body {
+                padding: 16px 20px;
+            }
+
+            .modal-footer {
+                padding: 14px 20px;
+                flex-wrap: wrap;
+            }
+
+            .modal-footer .btn {
+                min-height: 44px;
+                padding: 10px 16px;
+                font-size: 15px;
+            }
+
+            .form-label {
+                font-size: 14px;
+            }
+
+            .form-input, .form-select, .form-textarea {
+                padding: 10px 14px;
+                font-size: 16px; /* Prevent iOS zoom */
+                min-height: 44px;
+            }
+
+            .form-textarea {
+                min-height: 100px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            /* Stats */
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+
+            .stat-card {
+                padding: 14px 10px;
+            }
+
+            .stat-card-value {
+                font-size: 24px;
+            }
+
+            .stats-row {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-section {
+                padding: 16px;
+            }
+
+            /* Export dropdown */
+            .export-menu {
+                left: auto;
+                right: 0;
+                min-width: 160px;
+            }
+
+            .export-menu-item {
+                padding: 12px 18px;
+                font-size: 15px;
+            }
+
+            /* Toast */
+            .toast {
+                left: 16px;
+                right: 16px;
+                bottom: 16px;
+                text-align: center;
+                font-size: 14px;
+                padding: 12px 16px;
+            }
+
+            /* Backup area */
+            .backup-area {
+                font-size: 12px;
+                padding: 12px;
+            }
+
+            /* Main padding */
+            .main {
+                padding: 16px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .board {
+                grid-template-columns: 1fr;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--text);
+            color: white;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s;
+            z-index: 2000;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Export/Import area */
+        .backup-area {
+            margin-top: 24px;
+            padding: 16px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .backup-area code {
+            background: var(--bg-secondary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="header-content">
+            <div style="display:flex;align-items:center;gap:16px;">
+                <div class="logo">
+                    <div class="logo-icon">秋</div>
+                    秋招 Tracker
+                </div>
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-dot" style="background: var(--text);"></div>
+                        总计 <span class="stat-num" id="stat-total">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-dot" style="background: #f0c040;"></div>
+                        流程中 <span class="stat-num" id="stat-progress">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-dot" style="background: #4caf50;"></div>
+                        Offer <span class="stat-num" id="stat-offer">0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <input type="text" class="search-box" id="searchInput" placeholder="搜索公司或岗位...">
+                <button class="btn btn-active" id="viewBoard" onclick="switchView('board')">看板</button>
+                <button class="btn" id="viewList" onclick="switchView('list')">列表</button>
+                <button class="btn" id="viewStats" onclick="switchView('stats')">统计</button>
+                <div class="export-dropdown">
+                    <button class="btn" onclick="toggleExportMenu(event)">导出备份 ▾</button>
+                    <div class="export-menu" id="exportMenu">
+                        <button class="export-menu-item" onclick="exportJSON()">导出 JSON 文件</button>
+                        <button class="export-menu-item" onclick="exportExcel()">导出 Excel 文件</button>
+                        <button class="export-menu-item" onclick="copyToClipboard()">复制到剪贴板 📋</button>
+                    </div>
+                </div>
+                <div class="export-dropdown">
+                    <button class="btn" onclick="toggleImportMenu(event)">导入备份 ▾</button>
+                    <div class="export-menu" id="importMenu">
+                        <button class="export-menu-item" onclick="importJSON()">导入 JSON 文件</button>
+                        <button class="export-menu-item" onclick="importExcel()">导入 Excel/CSV 文件</button>
+                        <button class="export-menu-item" onclick="openPasteModal()">从剪贴板导入 📋</button>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="openModal()">+ 添加投递</button>
+                <button class="theme-toggle" onclick="toggleTheme()" title="切换深色/浅色模式" id="themeToggle">🌙</button>
+            </div>
+            <input type="file" id="importFile" accept=".json" style="display:none;" onchange="handleImport(event)">
+            <input type="file" id="importCSVFile" accept=".csv" style="display:none;" onchange="handleExcelImport(event)">
+        </div>
+    </div>
+
+    <div class="main">
+        <!-- Filter Bar -->
+        <div class="filter-bar" id="filterBar">
+            <div class="filter-group">
+                <select class="filter-select" id="filterStatus" onchange="applyFilters()">
+                    <option value="">全部状态</option>
+                    <option value="已投递">已投递</option>
+                    <option value="流程中">流程中</option>
+                    <option value="offer">Offer</option>
+                    <option value="挂掉">挂掉</option>
+                </select>
+                <select class="filter-select" id="filterCity" onchange="applyFilters()">
+                    <option value="">全部城市</option>
+                </select>
+                <select class="filter-select" id="filterTag" onchange="applyFilters()">
+                    <option value="">全部行业</option>
+                </select>
+                <button class="btn" onclick="clearFilters()" id="clearFilterBtn" style="display:none;">清除筛选</button>
+            </div>
+            <span class="filter-result" id="filterResult"></span>
+        </div>
+
+        <!-- Board View -->
+        <div class="board" id="boardView">
+            <div class="column" data-status="已投递">
+                <div class="column-header">
+                    <span>已投递</span>
+                    <span class="column-count" id="count-applied">0</span>
+                </div>
+                <div class="column-body" id="col-applied" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
+            </div>
+            <div class="column" data-status="流程中">
+                <div class="column-header">
+                    <span>流程中</span>
+                    <span class="column-count" id="count-progress">0</span>
+                </div>
+                <div class="column-body" id="col-progress" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
+            </div>
+            <div class="column" data-status="offer">
+                <div class="column-header">
+                    <span>Offer</span>
+                    <span class="column-count" id="count-offer">0</span>
+                </div>
+                <div class="column-body" id="col-offer" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
+            </div>
+            <div class="column" data-status="挂掉">
+                <div class="column-header">
+                    <span>挂掉</span>
+                    <span class="column-count" id="count-rejected">0</span>
+                </div>
+                <div class="column-body" id="col-rejected" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
+            </div>
+        </div>
+
+        <!-- List View -->
+        <div class="list-view" id="listView">
+            <table class="list-table">
+                <thead>
+                    <tr>
+                        <th class="sortable" onclick="setSort('company')" id="th-company">公司 <span class="sort-arrow"></span></th>
+                        <th class="sortable" onclick="setSort('role')" id="th-role">岗位 <span class="sort-arrow"></span></th>
+                        <th class="sortable" onclick="setSort('city')" id="th-city">城市 <span class="sort-arrow"></span></th>
+                        <th class="sortable" onclick="setSort('status')" id="th-status">状态 <span class="sort-arrow"></span></th>
+                        <th class="sortable" onclick="setSort('date')" id="th-date">投递日期 <span class="sort-arrow"></span></th>
+                        <th>面试时间</th>
+                        <th>内推码</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="listBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Stats View -->
+        <div class="stats-view" id="statsView">
+            <div class="stats-grid" id="statsCards"></div>
+            <div class="stats-section">
+                <div class="stats-section-title">投递状态分布</div>
+                <div id="statsBarChart"></div>
+            </div>
+            <div class="stats-row">
+                <div class="stats-section">
+                    <div class="stats-section-title">城市分布</div>
+                    <div id="statsCity"></div>
+                </div>
+                <div class="stats-section">
+                    <div class="stats-section-title">月度投递趋势</div>
+                    <div id="statsMonthly"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="backup-area">
+            <strong>💡 数据存储提示</strong><br>
+            数据保存在浏览器本地，换电脑或清除缓存会丢失。建议定期点击右上角「导出备份」保存 JSON 文件。
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">添加投递</div>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="jobForm">
+                    <input type="hidden" id="jobId">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">公司名 *</label>
+                            <input type="text" class="form-input" id="company" required placeholder="例如：字节跳动">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">岗位 *</label>
+                            <input type="text" class="form-input" id="role" required placeholder="例如：后端开发工程师">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">城市</label>
+                            <input type="text" class="form-input" id="city" placeholder="例如：北京 / 上海">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">投递日期</label>
+                            <input type="date" class="form-input" id="date">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">当前状态</label>
+                            <select class="form-select" id="status" onchange="toggleSubStatus()">
+                                <option value="已投递">已投递</option>
+                                <option value="流程中">流程中</option>
+                                <option value="offer">Offer</option>
+                                <option value="挂掉">挂掉</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">内推码</label>
+                            <input type="text" class="form-input" id="referral" placeholder="有内推码可以记在这里">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">行业/类型</label>
+                            <select class="form-select" id="tag">
+                                <option value="">-- 选择行业 --</option>
+                                <option value="互联网/电商">互联网/电商</option>
+                                <option value="金融/银行">金融/银行</option>
+                                <option value="国企/央企">国企/央企</option>
+                                <option value="外企">外企</option>
+                                <option value="制造业/硬件">制造业/硬件</option>
+                                <option value="咨询">咨询</option>
+                                <option value="游戏">游戏</option>
+                                <option value="AI/大模型">AI/大模型</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">面试/笔试时间</label>
+                            <input type="date" class="form-input" id="interviewDate">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group" id="subStatusGroup" style="display:none;">
+                            <label class="form-label">面试阶段</label>
+                            <select class="form-select" id="subStatus">
+                                <option value="">-- 选择阶段 --</option>
+                                <option value="待笔试">待笔试</option>
+                                <option value="已笔试">已笔试</option>
+                                <option value="一面">一面</option>
+                                <option value="二面">二面</option>
+                                <option value="三面">三面</option>
+                                <option value="HR面">HR面</option>
+                                <option value="终面">终面</option>
+                                <option value="已发意向">已发意向</option>
+                            </select>
+                        </div>
+                        <div class="form-group"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">投递链接 / JD 链接</label>
+                        <input type="url" class="form-input" id="link" placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">备注 / 复盘</label>
+                        <textarea class="form-textarea" id="notes" placeholder="笔试内容、面试问题、薪资情况..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="deleteBtn" style="margin-right:auto;display:none;" onclick="deleteJob()">删除</button>
+                <button type="button" class="btn" onclick="closeModal()">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveJob()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paste Import Modal -->
+    <div class="modal-overlay" id="pasteModal">
+        <div class="modal" style="max-width:560px;">
+            <div class="modal-header">
+                <div class="modal-title">从剪贴板导入</div>
+                <button class="modal-close" onclick="closePasteModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">
+                    在电脑上复制数据后，通过微信/QQ 发送到手机，再把内容粘贴到下方即可同步。
+                </p>
+                <textarea class="form-textarea" id="pasteArea" placeholder="在此粘贴之前复制的 JSON 备份内容..." style="min-height:200px;"></textarea>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:12px;">
+                    <input type="checkbox" id="replaceMode">
+                    <label for="replaceMode" style="font-size:13px;color:var(--text-secondary);">替换全部数据（默认合并，勾选后覆盖）</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn" onclick="closePasteModal()">取消</button>
+                <button type="button" class="btn btn-primary" onclick="doPasteImport()">确认导入</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Data
+        let jobs = [];
+        const STORAGE_KEY = 'qiuzhao_tracker_v1';
+        const THEME_KEY = 'qiuzhao_theme';
+        let currentView = 'board';
+        let draggedId = null;
+        let sortField = 'date';
+        let sortDir = 'desc';
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            initTheme();
+            render();
+
+            // Set default date to today
+            document.getElementById('date').valueAsDate = new Date();
+
+            // Search
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                render(e.target.value);
+            });
+        });
+
+        function loadData() {
+            try {
+                const data = localStorage.getItem(STORAGE_KEY);
+                if (data) {
+                    jobs = JSON.parse(data);
+                }
+            } catch (e) {
+                console.error('Load failed', e);
+            }
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs));
+            } catch (e) {
+                showToast('保存失败，可能是存储空间已满');
+            }
+        }
+
+        function exportJSON() {
+            const dataStr = JSON.stringify(jobs, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `秋招备份_${new Date().toLocaleDateString()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            document.getElementById('exportMenu').classList.remove('show');
+            showToast('已导出 JSON 文件');
+        }
+
+        function exportExcel() {
+            // Build CSV with BOM for Excel Chinese support
+            const headers = ['公司', '岗位', '城市', '行业', '状态', '面试阶段', '投递日期', '面试时间', '内推码', 'JD链接', '备注'];
+            const rows = [headers];
+
+            jobs.forEach(j => {
+                rows.push([
+                    j.company || '',
+                    j.role || '',
+                    j.city || '',
+                    j.tag || '',
+                    j.status || '',
+                    j.subStatus || '',
+                    j.date || '',
+                    j.interviewDate || '',
+                    j.referral || '',
+                    j.link || '',
+                    j.notes || ''
+                ]);
+            });
+
+            // CSV with BOM for Excel UTF-8 support
+            const BOM = '﻿';
+            const csvContent = BOM + rows.map(row =>
+                row.map(cell => '"' + (cell || '').replace(/"/g, '""') + '"').join(',')
+            ).join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `秋招记录_${new Date().toLocaleDateString()}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            document.getElementById('exportMenu').classList.remove('show');
+            showToast('已导出 Excel 文件');
+        }
+
+        function toggleExportMenu(event) {
+            event.stopPropagation();
+            document.getElementById('importMenu').classList.remove('show');
+            document.getElementById('exportMenu').classList.toggle('show');
+        }
+
+        // Theme
+        function initTheme() {
+            const saved = localStorage.getItem(THEME_KEY);
+            const theme = saved || 'light';
+            document.documentElement.dataset.theme = theme;
+            updateThemeIcon(theme);
+        }
+
+        function toggleTheme() {
+            const current = document.documentElement.dataset.theme;
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.dataset.theme = next;
+            localStorage.setItem(THEME_KEY, next);
+            updateThemeIcon(next);
+        }
+
+        function updateThemeIcon(theme) {
+            document.getElementById('themeToggle').textContent = theme === 'dark' ? '☀️' : '🌙';
+        }
+
+        // Import
+        function toggleImportMenu(event) {
+            event.stopPropagation();
+            document.getElementById('exportMenu').classList.remove('show');
+            document.getElementById('importMenu').classList.toggle('show');
+        }
+
+        function importJSON() {
+            document.getElementById('importMenu').classList.remove('show');
+            document.getElementById('importFile').click();
+        }
+
+        function importExcel() {
+            document.getElementById('importMenu').classList.remove('show');
+            document.getElementById('importCSVFile').click();
+        }
+
+        // Copy to clipboard
+        async function copyToClipboard() {
+            const dataStr = JSON.stringify(jobs, null, 2);
+            document.getElementById('exportMenu').classList.remove('show');
+            try {
+                await navigator.clipboard.writeText(dataStr);
+                showToast('已复制到剪贴板，可粘贴到另一设备');
+            } catch (err) {
+                // Fallback: select in a textarea
+                const ta = document.createElement('textarea');
+                ta.value = dataStr;
+                ta.style.position = 'fixed';
+                ta.style.left = '-9999px';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast('已复制到剪贴板');
+            }
+        }
+
+        // Paste import
+        function openPasteModal() {
+            document.getElementById('pasteModal').classList.add('active');
+            document.getElementById('pasteArea').value = '';
+            document.getElementById('replaceMode').checked = false;
+            document.getElementById('pasteArea').focus();
+
+            // Try to auto-fill from clipboard
+            if (navigator.clipboard && navigator.clipboard.readText) {
+                navigator.clipboard.readText().then(text => {
+                    try {
+                        JSON.parse(text);
+                        document.getElementById('pasteArea').value = text;
+                        showToast('已自动读取剪贴板内容');
+                    } catch (e) {
+                        // Not valid JSON, leave empty
+                    }
+                }).catch(() => {});
+            }
+        }
+
+        function closePasteModal() {
+            document.getElementById('pasteModal').classList.remove('active');
+        }
+
+        function doPasteImport() {
+            const text = document.getElementById('pasteArea').value.trim();
+            if (!text) {
+                showToast('请先粘贴内容');
+                return;
+            }
+
+            let imported;
+            try {
+                imported = JSON.parse(text);
+                if (!Array.isArray(imported)) throw new Error('格式错误');
+            } catch (err) {
+                showToast('导入失败：内容格式不正确，请粘贴有效的 JSON');
+                return;
+            }
+
+            const replaceAll = document.getElementById('replaceMode').checked;
+
+            if (replaceAll) {
+                jobs = imported.filter(item => item.id && item.company);
+                saveData();
+                render(document.getElementById('searchInput').value);
+                closePasteModal();
+                showToast(`已替换全部数据，共 ${jobs.length} 条记录`);
+                return;
+            }
+
+            // Merge mode
+            const existingIds = new Set(jobs.map(j => j.id));
+            let addedCount = 0;
+            let updatedCount = 0;
+
+            imported.forEach(item => {
+                if (!item.id || !item.company) return;
+                const idx = jobs.findIndex(j => j.id === item.id);
+                if (idx !== -1) {
+                    jobs[idx] = { ...jobs[idx], ...item };
+                    updatedCount++;
+                } else {
+                    jobs.push(item);
+                    addedCount++;
+                }
+            });
+
+            saveData();
+            render(document.getElementById('searchInput').value);
+            closePasteModal();
+            showToast(`导入完成：新增 ${addedCount} 条，更新 ${updatedCount} 条`);
+        }
+
+        function handleImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (!Array.isArray(imported)) throw new Error('格式错误');
+
+                    // Merge: overwrite by id, add new
+                    const existingIds = new Set(jobs.map(j => j.id));
+                    let addedCount = 0;
+                    let updatedCount = 0;
+
+                    imported.forEach(item => {
+                        if (!item.id || !item.company) return;
+                        const idx = jobs.findIndex(j => j.id === item.id);
+                        if (idx !== -1) {
+                            jobs[idx] = { ...jobs[idx], ...item };
+                            updatedCount++;
+                        } else {
+                            jobs.push(item);
+                            addedCount++;
+                        }
+                    });
+
+                    saveData();
+                    render(document.getElementById('searchInput').value);
+                    showToast(`导入完成：新增 ${addedCount} 条，更新 ${updatedCount} 条`);
+                } catch (err) {
+                    showToast('导入失败：文件格式不正确');
+                }
+            };
+            reader.readAsText(file);
+            // Reset so the same file can be re-imported
+            event.target.value = '';
+        }
+
+        function handleExcelImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const text = e.target.result;
+                    const rows = parseCSV(text);
+                    if (rows.length < 2) {
+                        showToast('导入失败：文件内容为空');
+                        return;
+                    }
+
+                    // Map header row to field names
+                    const headerMap = {
+                        '公司': 'company', '岗位': 'role', '城市': 'city',
+                        '行业': 'tag', '状态': 'status', '面试阶段': 'subStatus',
+                        '投递日期': 'date', '面试时间': 'interviewDate',
+                        '内推码': 'referral', 'JD链接': 'link', '备注': 'notes'
+                    };
+
+                    const headers = rows[0];
+                    const imported = [];
+
+                    for (let i = 1; i < rows.length; i++) {
+                        const row = rows[i];
+                        const item = { id: Date.now().toString() + '_' + i };
+                        headers.forEach((h, idx) => {
+                            const field = headerMap[h];
+                            if (field && row[idx]) {
+                                item[field] = row[idx].trim();
+                            }
+                        });
+                        if (item.company && item.role) {
+                            imported.push(item);
+                        }
+                    }
+
+                    if (imported.length === 0) {
+                        showToast('导入失败：未找到有效数据');
+                        return;
+                    }
+
+                    // Merge: try to match by company+role+date
+                    let addedCount = 0;
+                    let updatedCount = 0;
+
+                    imported.forEach(item => {
+                        const match = jobs.findIndex(j =>
+                            j.company === item.company &&
+                            j.role === item.role &&
+                            j.date === item.date
+                        );
+                        if (match !== -1) {
+                            jobs[match] = { ...jobs[match], ...item, id: jobs[match].id };
+                            updatedCount++;
+                        } else {
+                            jobs.push(item);
+                            addedCount++;
+                        }
+                    });
+
+                    saveData();
+                    render(document.getElementById('searchInput').value);
+                    showToast(`导入完成：新增 ${addedCount} 条，更新 ${updatedCount} 条`);
+                } catch (err) {
+                    showToast('导入失败：文件格式不正确');
+                }
+            };
+            reader.readAsText(file, 'UTF-8');
+            event.target.value = '';
+        }
+
+        function parseCSV(text) {
+            // Remove BOM
+            if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+
+            const rows = [];
+            let current = [];
+            let cell = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < text.length; i++) {
+                const ch = text[i];
+                const next = text[i + 1];
+
+                if (inQuotes) {
+                    if (ch === '"') {
+                        if (next === '"') {
+                            cell += '"';
+                            i++;
+                        } else {
+                            inQuotes = false;
+                        }
+                    } else {
+                        cell += ch;
+                    }
+                } else {
+                    if (ch === '"') {
+                        inQuotes = true;
+                    } else if (ch === ',') {
+                        current.push(cell);
+                        cell = '';
+                    } else if (ch === '\n') {
+                        current.push(cell);
+                        cell = '';
+                        if (current.length > 0) rows.push(current);
+                        current = [];
+                    } else if (ch === '\r') {
+                        // skip
+                    } else {
+                        cell += ch;
+                    }
+                }
+            }
+            // Last cell
+            current.push(cell);
+            if (current.length > 0 && current.some(c => c !== '')) {
+                rows.push(current);
+            }
+
+            return rows;
+        }
+
+        // Render
+        function render(searchTerm = '') {
+            const search = searchTerm || document.getElementById('searchInput').value;
+            const filterStatus = document.getElementById('filterStatus').value;
+            const filterCity = document.getElementById('filterCity').value;
+            const filterTag = document.getElementById('filterTag').value;
+
+            // Filter
+            let filtered = [...jobs];
+
+            if (search) {
+                const s = search.toLowerCase();
+                filtered = filtered.filter(j =>
+                    (j.company && j.company.toLowerCase().includes(s)) ||
+                    (j.role && j.role.toLowerCase().includes(s)) ||
+                    (j.city && j.city.toLowerCase().includes(s))
+                );
+            }
+
+            if (filterStatus) {
+                filtered = filtered.filter(j => j.status === filterStatus);
+            }
+            if (filterCity) {
+                filtered = filtered.filter(j => j.city === filterCity);
+            }
+            if (filterTag) {
+                filtered = filtered.filter(j => j.tag === filterTag);
+            }
+
+            // Sort
+            filtered.sort((a, b) => {
+                let va, vb;
+                switch (sortField) {
+                    case 'company':
+                    case 'role':
+                    case 'city':
+                        va = (a[sortField] || '').toLowerCase();
+                        vb = (b[sortField] || '').toLowerCase();
+                        return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+                    case 'status':
+                        const order = ['已投递', '流程中', 'offer', '挂掉'];
+                        va = order.indexOf(a.status);
+                        vb = order.indexOf(b.status);
+                        return sortDir === 'asc' ? va - vb : vb - va;
+                    case 'date':
+                    default:
+                        va = new Date(a.date || 0);
+                        vb = new Date(b.date || 0);
+                        return sortDir === 'asc' ? va - vb : vb - va;
+                }
+            });
+
+            // Update filter options
+            updateFilterOptions();
+
+            // Show/hide clear filter button
+            document.getElementById('clearFilterBtn').style.display = (filterStatus || filterCity || filterTag) ? 'inline-flex' : 'none';
+            document.getElementById('filterResult').textContent = filtered.length !== jobs.length ? `显示 ${filtered.length} / ${jobs.length} 条` : '';
+
+            // Stats (based on all jobs, not filtered)
+            const counts = {
+                '已投递': 0,
+                '流程中': 0,
+                'offer': 0,
+                '挂掉': 0
+            };
+            jobs.forEach(j => {
+                if (counts[j.status] !== undefined) counts[j.status]++;
+            });
+
+            document.getElementById('stat-total').textContent = jobs.length;
+            document.getElementById('stat-progress').textContent = counts['流程中'];
+            document.getElementById('stat-offer').textContent = counts['offer'];
+            document.getElementById('count-applied').textContent = counts['已投递'];
+            document.getElementById('count-progress').textContent = counts['流程中'];
+            document.getElementById('count-offer').textContent = counts['offer'];
+            document.getElementById('count-rejected').textContent = counts['挂掉'];
+
+            // Board View
+            const cols = {
+                '已投递': document.getElementById('col-applied'),
+                '流程中': document.getElementById('col-progress'),
+                'offer': document.getElementById('col-offer'),
+                '挂掉': document.getElementById('col-rejected')
+            };
+
+            Object.values(cols).forEach(col => col.innerHTML = '');
+
+            filtered.forEach(job => {
+                const card = createCard(job);
+                if (cols[job.status]) {
+                    cols[job.status].appendChild(card);
+                }
+            });
+
+            Object.values(cols).forEach(col => {
+                if (!col.hasChildNodes()) {
+                    col.innerHTML = '<div class="empty-state">暂无记录</div>';
+                }
+            });
+
+            // List View
+            const tbody = document.getElementById('listBody');
+            tbody.innerHTML = '';
+            filtered.forEach(job => {
+                const tr = document.createElement('tr');
+                const statusClass = {
+                    '已投递': 'status-applied-badge',
+                    '流程中': 'status-progress-badge',
+                    'offer': 'status-offer-badge',
+                    '挂掉': 'status-rejected-badge'
+                }[job.status] || 'status-applied-badge';
+
+                const statusLabel = job.subStatus ? `${job.status} · ${job.subStatus}` : job.status;
+                tr.innerHTML = `
+                    <td><strong>${escapeHtml(job.company)}</strong>${job.tag ? ` <span class="card-tag industry" style="font-size:10px;padding:1px 5px;">${escapeHtml(job.tag)}</span>` : ''}</td>
+                    <td>${escapeHtml(job.role)}</td>
+                    <td>${escapeHtml(job.city || '-')}</td>
+                    <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+                    <td>${job.date || '-'}</td>
+                    <td>${job.interviewDate || '-'}</td>
+                    <td>${job.referral ? `<code>${escapeHtml(job.referral)}</code>` : '-'}</td>
+                    <td><button class="btn" style="padding:4px 8px;font-size:12px;" onclick="editJob('${job.id}')">编辑</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Update sort arrows
+            document.querySelectorAll('.sort-arrow').forEach(el => { el.className = 'sort-arrow'; });
+            const activeTh = document.getElementById('th-' + sortField);
+            if (activeTh) {
+                activeTh.querySelector('.sort-arrow').classList.add(sortDir);
+            }
+        }
+
+        function createCard(job) {
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.draggable = true;
+            div.dataset.id = job.id;
+            
+            div.innerHTML = `
+                <div class="card-actions">
+                    ${job.link ? `<a href="${escapeHtml(job.link)}" target="_blank" class="icon-btn" title="打开JD链接" onclick="event.stopPropagation()" style="text-decoration:none;">🔗</a>` : ''}
+                    <button class="icon-btn" onclick="editJob('${job.id}')" title="编辑">✏️</button>
+                </div>
+                <div class="card-company">${escapeHtml(job.company)}</div>
+                <div class="card-role">${escapeHtml(job.role)}</div>
+                <div class="card-meta">
+                    ${job.city ? `<span class="card-tag">${escapeHtml(job.city)}</span>` : ''}
+                    ${job.tag ? `<span class="card-tag industry">${escapeHtml(job.tag)}</span>` : ''}
+                    ${job.subStatus ? `<span class="card-substatus">${escapeHtml(job.subStatus)}</span>` : ''}
+                    ${job.interviewDate ? `<span class="card-tag interview-date">📅 ${job.interviewDate}</span>` : ''}
+                    ${job.referral ? `<span class="card-tag referral">内推: ${escapeHtml(job.referral)}</span>` : ''}
+                    <span class="card-date">${job.date || ''}</span>
+                </div>
+                ${job.link ? `<a href="${escapeHtml(job.link)}" target="_blank" class="card-link-btn" onclick="event.stopPropagation()">📎 查看JD</a>` : ''}
+                ${job.notes ? `<div class="card-notes-preview">${escapeHtml(job.notes)}</div>` : ''}
+            `;
+
+            div.addEventListener('dragstart', (e) => {
+                draggedId = job.id;
+                div.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            div.addEventListener('dragend', () => {
+                div.classList.remove('dragging');
+                draggedId = null;
+                document.querySelectorAll('.column-body').forEach(col => {
+                    col.classList.remove('drag-over');
+                });
+            });
+
+            div.addEventListener('click', (e) => {
+                if (touchMoved) return; // Skip click after touch drag
+                if (!e.target.closest('.icon-btn') && !e.target.closest('.card-link-btn')) {
+                    editJob(job.id);
+                }
+            });
+
+            // Touch drag support
+            initTouchDrag(div, job.id);
+
+            return div;
+        }
+
+        // Drag & Drop
+        function allowDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function dragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function drop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            if (!draggedId) return;
+
+            const newStatus = e.currentTarget.closest('.column').dataset.status;
+            const job = jobs.find(j => j.id === draggedId);
+            if (job && job.status !== newStatus) {
+                job.status = newStatus;
+                saveData();
+                render(document.getElementById('searchInput').value);
+                showToast(`已移动到「${newStatus}」`);
+            }
+        }
+
+        // Touch Drag & Drop
+        let touchDragData = null;
+        let touchClone = null;
+        let touchStartX, touchStartY;
+        let touchMoved = false;
+
+        function initTouchDrag(cardEl, jobId) {
+            cardEl.addEventListener('touchstart', (e) => {
+                // Only start drag if not tapping a button/link
+                if (e.target.closest('.icon-btn') || e.target.closest('.card-link-btn')) return;
+
+                const touch = e.touches[0];
+                touchDragData = { id: jobId, card: cardEl };
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+                touchMoved = false;
+            }, { passive: true });
+
+            cardEl.addEventListener('touchmove', (e) => {
+                if (!touchDragData) return;
+                const touch = e.touches[0];
+                const dx = touch.clientX - touchStartX;
+                const dy = touch.clientY - touchStartY;
+
+                // Start drag after 10px movement
+                if (!touchMoved && Math.abs(dx) + Math.abs(dy) < 10) return;
+
+                if (!touchMoved) {
+                    touchMoved = true;
+                    // Create floating clone
+                    touchClone = cardEl.cloneNode(true);
+                    touchClone.style.position = 'fixed';
+                    touchClone.style.zIndex = '5000';
+                    touchClone.style.width = cardEl.offsetWidth + 'px';
+                    touchClone.style.opacity = '0.85';
+                    touchClone.style.transform = 'rotate(2deg) scale(1.02)';
+                    touchClone.style.pointerEvents = 'none';
+                    touchClone.style.boxShadow = '0 10px 30px rgba(0,0,0,0.2)';
+                    document.body.appendChild(touchClone);
+                    cardEl.classList.add('dragging');
+                }
+
+                // Move clone
+                touchClone.style.left = (touch.clientX - touchClone.offsetWidth / 2) + 'px';
+                touchClone.style.top = (touch.clientY - 30) + 'px';
+
+                // Highlight column under finger
+                document.querySelectorAll('.column-body').forEach(col => col.classList.remove('drag-over'));
+                const elUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+                const colBody = elUnder ? elUnder.closest('.column-body') : null;
+                if (colBody) colBody.classList.add('drag-over');
+
+                e.preventDefault();
+            }, { passive: false });
+
+            cardEl.addEventListener('touchend', (e) => {
+                if (!touchDragData) return;
+
+                document.querySelectorAll('.column-body').forEach(col => col.classList.remove('drag-over'));
+                cardEl.classList.remove('dragging');
+
+                if (touchClone) {
+                    if (touchMoved) {
+                        // Detect drop target
+                        const touch = e.changedTouches[0];
+                        const elUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+                        const col = elUnder ? elUnder.closest('.column') : null;
+                        if (col) {
+                            const newStatus = col.dataset.status;
+                            const job = jobs.find(j => j.id === touchDragData.id);
+                            if (job && job.status !== newStatus) {
+                                job.status = newStatus;
+                                saveData();
+                                render(document.getElementById('searchInput').value);
+                                showToast(`已移动到「${newStatus}」`);
+                            }
+                        }
+                    }
+                    touchClone.remove();
+                    touchClone = null;
+                }
+
+                touchDragData = null;
+                touchMoved = false;
+            });
+        }
+
+        function toggleSubStatus() {
+            const status = document.getElementById('status').value;
+            document.getElementById('subStatusGroup').style.display = status === '流程中' ? 'block' : 'none';
+        }
+
+        // Modal
+        function openModal(jobId = null) {
+            const modal = document.getElementById('modal');
+            const form = document.getElementById('jobForm');
+            const title = document.getElementById('modalTitle');
+            const deleteBtn = document.getElementById('deleteBtn');
+            
+            form.reset();
+            document.getElementById('date').valueAsDate = new Date();
+            
+            if (jobId) {
+                const job = jobs.find(j => j.id === jobId);
+                if (!job) return;
+                title.textContent = '编辑投递';
+                document.getElementById('jobId').value = job.id;
+                document.getElementById('company').value = job.company;
+                document.getElementById('role').value = job.role;
+                document.getElementById('city').value = job.city || '';
+                document.getElementById('date').value = job.date || '';
+                document.getElementById('status').value = job.status;
+                document.getElementById('tag').value = job.tag || '';
+                document.getElementById('interviewDate').value = job.interviewDate || '';
+                document.getElementById('referral').value = job.referral || '';
+                document.getElementById('link').value = job.link || '';
+                document.getElementById('notes').value = job.notes || '';
+                document.getElementById('subStatus').value = job.subStatus || '';
+                deleteBtn.style.display = 'inline-flex';
+            } else {
+                title.textContent = '添加投递';
+                document.getElementById('jobId').value = '';
+                document.getElementById('subStatus').value = '';
+                deleteBtn.style.display = 'none';
+            }
+
+            toggleSubStatus();
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+
+        function saveJob() {
+            const id = document.getElementById('jobId').value;
+            const company = document.getElementById('company').value.trim();
+            const role = document.getElementById('role').value.trim();
+            
+            if (!company || !role) {
+                showToast('请填写公司和岗位');
+                return;
+            }
+
+            const statusVal = document.getElementById('status').value;
+            const data = {
+                id: id || Date.now().toString(),
+                company,
+                role,
+                city: document.getElementById('city').value.trim(),
+                date: document.getElementById('date').value,
+                status: statusVal,
+                subStatus: statusVal === '流程中' ? document.getElementById('subStatus').value : '',
+                tag: document.getElementById('tag').value,
+                interviewDate: document.getElementById('interviewDate').value,
+                referral: document.getElementById('referral').value.trim(),
+                link: document.getElementById('link').value.trim(),
+                notes: document.getElementById('notes').value.trim()
+            };
+
+            if (id) {
+                const idx = jobs.findIndex(j => j.id === id);
+                if (idx !== -1) jobs[idx] = data;
+            } else {
+                jobs.unshift(data);
+            }
+
+            saveData();
+            render(document.getElementById('searchInput').value);
+            closeModal();
+            showToast(id ? '已更新' : '已添加');
+        }
+
+        function editJob(id) {
+            openModal(id);
+        }
+
+        function deleteJob() {
+            const id = document.getElementById('jobId').value;
+            if (!id) return;
+            if (!confirm('确定要删除这条记录吗？')) return;
+            
+            jobs = jobs.filter(j => j.id !== id);
+            saveData();
+            render(document.getElementById('searchInput').value);
+            closeModal();
+            showToast('已删除');
+        }
+
+        // Filters
+        function applyFilters() {
+            render();
+        }
+
+        function clearFilters() {
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('filterCity').value = '';
+            document.getElementById('filterTag').value = '';
+            render();
+        }
+
+        function updateFilterOptions() {
+            // Populate city and tag dropdowns from actual data
+            const cities = new Set();
+            const tags = new Set();
+            jobs.forEach(j => {
+                if (j.city) cities.add(j.city);
+                if (j.tag) tags.add(j.tag);
+            });
+
+            const citySelect = document.getElementById('filterCity');
+            const tagSelect = document.getElementById('filterTag');
+            const currentCity = citySelect.value;
+            const currentTag = tagSelect.value;
+
+            citySelect.innerHTML = '<option value="">全部城市</option>' +
+                [...cities].sort().map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+            tagSelect.innerHTML = '<option value="">全部行业</option>' +
+                [...tags].sort().map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+
+            citySelect.value = currentCity;
+            tagSelect.value = currentTag;
+        }
+
+        // Sort
+        function setSort(field) {
+            if (sortField === field) {
+                sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortField = field;
+                sortDir = field === 'date' ? 'desc' : 'asc';
+            }
+            render();
+        }
+
+        // View Switch
+        function switchView(view) {
+            currentView = view;
+            document.getElementById('boardView').style.display = view === 'board' ? 'grid' : 'none';
+            document.getElementById('listView').style.display = view === 'list' ? 'block' : 'none';
+            document.getElementById('statsView').style.display = view === 'stats' ? 'block' : 'none';
+            document.getElementById('filterBar').style.display = view === 'stats' ? 'none' : 'flex';
+            document.getElementById('viewBoard').classList.toggle('btn-active', view === 'board');
+            document.getElementById('viewList').classList.toggle('btn-active', view === 'list');
+            document.getElementById('viewStats').classList.toggle('btn-active', view === 'stats');
+
+            if (view === 'stats') renderStats();
+        }
+
+        // Stats
+        function renderStats() {
+            const counts = { '已投递': 0, '流程中': 0, 'offer': 0, '挂掉': 0 };
+            const cityMap = {};
+            const monthMap = {};
+
+            jobs.forEach(j => {
+                if (counts[j.status] !== undefined) counts[j.status]++;
+
+                const city = j.city || '未知';
+                cityMap[city] = (cityMap[city] || 0) + 1;
+
+                if (j.date) {
+                    const month = j.date.substring(0, 7); // YYYY-MM
+                    monthMap[month] = (monthMap[month] || 0) + 1;
+                }
+            });
+
+            const total = jobs.length;
+            const offerRate = total > 0 ? ((counts['offer'] / total) * 100).toFixed(1) : '0.0';
+
+            // Stat cards
+            document.getElementById('statsCards').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-card-label">总投递</div>
+                    <div class="stat-card-value">${total}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-label">流程中</div>
+                    <div class="stat-card-value">${counts['流程中']}</div>
+                    <div class="stat-card-sub">${total > 0 ? ((counts['流程中'] / total) * 100).toFixed(0) : 0}%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-label">Offer</div>
+                    <div class="stat-card-value" style="color:#4caf50;">${counts['offer']}</div>
+                    <div class="stat-card-sub">通过率 ${offerRate}%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-label">已挂</div>
+                    <div class="stat-card-value" style="color:#e57373;">${counts['挂掉']}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-label">待筛选</div>
+                    <div class="stat-card-value">${counts['已投递']}</div>
+                </div>
+            `;
+
+            // Bar chart
+            const statusLabels = [
+                { key: '已投递', label: '已投递', cls: 'applied' },
+                { key: '流程中', label: '流程中', cls: 'progress' },
+                { key: 'offer', label: 'Offer', cls: 'offer' },
+                { key: '挂掉', label: '挂掉', cls: 'rejected' }
+            ];
+            const maxCount = Math.max(1, ...Object.values(counts));
+
+            document.getElementById('statsBarChart').innerHTML = statusLabels.map(s => `
+                <div class="bar-row">
+                    <div class="bar-label">${s.label}</div>
+                    <div class="bar-track">
+                        <div class="bar-fill ${s.cls}" style="width:${(counts[s.key] / maxCount) * 100}%;">${counts[s.key]}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // City ranking
+            const cityEntries = Object.entries(cityMap).sort((a, b) => b[1] - a[1]);
+            const maxCity = Math.max(1, ...Object.values(cityMap));
+
+            document.getElementById('statsCity').innerHTML = cityEntries.length > 0
+                ? cityEntries.map(([city, cnt], i) => `
+                    <div class="city-row">
+                        <div class="city-rank">${i + 1}</div>
+                        <div class="city-name">${escapeHtml(city)}</div>
+                        <div class="city-count">${cnt}</div>
+                        <div class="city-bar">
+                            <div class="city-bar-fill" style="width:${(cnt / maxCity) * 100}%;"></div>
+                        </div>
+                    </div>
+                `).join('')
+                : '<div class="empty-state">暂无数据</div>';
+
+            // Monthly trend
+            const monthEntries = Object.entries(monthMap).sort();
+            const maxMonth = Math.max(1, ...Object.values(monthMap));
+
+            document.getElementById('statsMonthly').innerHTML = monthEntries.length > 0
+                ? monthEntries.map(([month, cnt]) => `
+                    <div class="month-row">
+                        <div class="month-label">${month}</div>
+                        <div class="month-bar">
+                            <div class="month-bar-fill" style="width:${(cnt / maxMonth) * 100}%;">${cnt}</div>
+                        </div>
+                    </div>
+                `).join('')
+                : '<div class="empty-state">暂无数据</div>';
+        }
+
+        // Utils
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Close export/import menus on outside click
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.export-dropdown')) {
+                document.getElementById('exportMenu').classList.remove('show');
+                document.getElementById('importMenu').classList.remove('show');
+            }
+        });
+
+        // Close paste modal on overlay click
+        document.getElementById('pasteModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('pasteModal')) closePasteModal();
+        });
+
+        // Close modal on overlay click
+        document.getElementById('modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('modal')) closeModal();
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const exportMenu = document.getElementById('exportMenu');
+                const importMenu = document.getElementById('importMenu');
+                if (exportMenu.classList.contains('show')) {
+                    exportMenu.classList.remove('show');
+                    return;
+                }
+                if (importMenu.classList.contains('show')) {
+                    importMenu.classList.remove('show');
+                    return;
+                }
+                const pasteModal = document.getElementById('pasteModal');
+                if (pasteModal.classList.contains('active')) {
+                    closePasteModal();
+                    return;
+                }
+                closeModal();
+            }
+            if (e.key === 'n' && e.ctrlKey) {
+                e.preventDefault();
+                openModal();
+            }
+        });
+    </script>
+</body>
+</html>
