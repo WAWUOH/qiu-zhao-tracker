@@ -321,18 +321,13 @@
             gap: 8px;
         }
 
-        .column-body.drag-over {
-            background: #efefef;
-            border-radius: 0 0 8px 8px;
-        }
-
         /* Card */
         .card {
             background: var(--bg);
             border: 1px solid var(--border);
             border-radius: 6px;
             padding: 12px;
-            cursor: grab;
+            cursor: pointer;
             transition: all 0.15s;
             box-shadow: var(--shadow);
             position: relative;
@@ -340,12 +335,6 @@
 
         .card:hover {
             box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-            transform: translateY(-1px);
-        }
-
-        .card.dragging {
-            opacity: 0.5;
-            cursor: grabbing;
         }
 
         .card-company {
@@ -1272,28 +1261,28 @@
                     <span>已投递</span>
                     <span class="column-count" id="count-applied">0</span>
                 </div>
-                <div class="column-body" id="col-applied" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
+                <div class="column-body" id="col-applied"></div>
             </div>
             <div class="column" data-status="流程中">
                 <div class="column-header">
                     <span>流程中</span>
                     <span class="column-count" id="count-progress">0</span>
                 </div>
-                <div class="column-body" id="col-progress" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
+                <div class="column-body" id="col-progress"></div>
             </div>
             <div class="column" data-status="offer">
                 <div class="column-header">
                     <span>Offer</span>
                     <span class="column-count" id="count-offer">0</span>
                 </div>
-                <div class="column-body" id="col-offer" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
+                <div class="column-body" id="col-offer"></div>
             </div>
             <div class="column" data-status="挂掉">
                 <div class="column-header">
                     <span>挂掉</span>
                     <span class="column-count" id="count-rejected">0</span>
                 </div>
-                <div class="column-body" id="col-rejected" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)"></div>
+                <div class="column-body" id="col-rejected"></div>
             </div>
         </div>
 
@@ -1474,7 +1463,6 @@
         const STORAGE_KEY = 'qiuzhao_tracker_v1';
         const THEME_KEY = 'qiuzhao_theme';
         let currentView = 'board';
-        let draggedId = null;
         let sortField = 'date';
         let sortDir = 'desc';
 
@@ -2005,9 +1993,8 @@
         function createCard(job) {
             const div = document.createElement('div');
             div.className = 'card';
-            div.draggable = true;
             div.dataset.id = job.id;
-            
+
             div.innerHTML = `
                 <div class="card-actions">
                     ${job.link ? `<a href="${job.link.replace(/"/g, '&quot;')}" target="_blank" class="icon-btn" title="打开JD链接" onclick="event.stopPropagation()" style="text-decoration:none;">🔗</a>` : ''}
@@ -2027,145 +2014,13 @@
                 ${job.notes ? `<div class="card-notes-preview">${escapeHtml(job.notes)}</div>` : ''}
             `;
 
-            div.addEventListener('dragstart', (e) => {
-                draggedId = job.id;
-                div.classList.add('dragging');
-                e.dataTransfer.effectAllowed = 'move';
-            });
-
-            div.addEventListener('dragend', () => {
-                div.classList.remove('dragging');
-                draggedId = null;
-                document.querySelectorAll('.column-body').forEach(col => {
-                    col.classList.remove('drag-over');
-                });
-            });
-
             div.addEventListener('click', (e) => {
-                if (touchDragged) { touchDragged = false; return; }
                 if (!e.target.closest('.icon-btn') && !e.target.closest('.card-link-btn')) {
                     editJob(job.id);
                 }
             });
 
-            // Touch drag support
-            initTouchDrag(div, job.id);
-
             return div;
-        }
-
-        // Drag & Drop
-        function allowDrop(e) {
-            e.preventDefault();
-            e.currentTarget.classList.add('drag-over');
-        }
-
-        function dragLeave(e) {
-            e.currentTarget.classList.remove('drag-over');
-        }
-
-        function drop(e) {
-            e.preventDefault();
-            e.currentTarget.classList.remove('drag-over');
-            if (!draggedId) return;
-
-            const newStatus = e.currentTarget.closest('.column').dataset.status;
-            const job = jobs.find(j => j.id === draggedId);
-            if (job && job.status !== newStatus) {
-                job.status = newStatus;
-                saveData();
-                render(document.getElementById('searchInput').value);
-                showToast(`已移动到「${newStatus}」`);
-            }
-        }
-
-        // Touch Drag & Drop
-        let touchDragData = null;
-        let touchClone = null;
-        let touchStartX, touchStartY;
-        let touchMoved = false;
-        let touchDragged = false; // persists past touchend to suppress click
-
-        function initTouchDrag(cardEl, jobId) {
-            cardEl.addEventListener('touchstart', (e) => {
-                // Only start drag if not tapping a button/link
-                if (e.target.closest('.icon-btn') || e.target.closest('.card-link-btn')) return;
-
-                const touch = e.touches[0];
-                touchDragData = { id: jobId, card: cardEl };
-                touchStartX = touch.clientX;
-                touchStartY = touch.clientY;
-                touchMoved = false;
-            }, { passive: true });
-
-            cardEl.addEventListener('touchmove', (e) => {
-                if (!touchDragData) return;
-                const touch = e.touches[0];
-                const dx = touch.clientX - touchStartX;
-                const dy = touch.clientY - touchStartY;
-
-                // Start drag after 10px movement
-                if (!touchMoved && Math.abs(dx) + Math.abs(dy) < 10) return;
-
-                if (!touchMoved) {
-                    touchMoved = true;
-                    // Create floating clone
-                    touchClone = cardEl.cloneNode(true);
-                    touchClone.style.position = 'fixed';
-                    touchClone.style.zIndex = '5000';
-                    touchClone.style.width = cardEl.offsetWidth + 'px';
-                    touchClone.style.opacity = '0.85';
-                    touchClone.style.transform = 'rotate(2deg) scale(1.02)';
-                    touchClone.style.pointerEvents = 'none';
-                    touchClone.style.boxShadow = '0 10px 30px rgba(0,0,0,0.2)';
-                    document.body.appendChild(touchClone);
-                    cardEl.classList.add('dragging');
-                }
-
-                // Move clone
-                touchClone.style.left = (touch.clientX - touchClone.offsetWidth / 2) + 'px';
-                touchClone.style.top = (touch.clientY - 30) + 'px';
-
-                // Highlight column under finger
-                document.querySelectorAll('.column-body').forEach(col => col.classList.remove('drag-over'));
-                const elUnder = document.elementFromPoint(touch.clientX, touch.clientY);
-                const colBody = elUnder ? elUnder.closest('.column-body') : null;
-                if (colBody) colBody.classList.add('drag-over');
-
-                e.preventDefault();
-            }, { passive: false });
-
-            cardEl.addEventListener('touchend', (e) => {
-                if (!touchDragData) return;
-
-                document.querySelectorAll('.column-body').forEach(col => col.classList.remove('drag-over'));
-                cardEl.classList.remove('dragging');
-
-                if (touchClone) {
-                    if (touchMoved) {
-                        touchDragged = true;
-                        // Detect drop target
-                        const touch = e.changedTouches[0];
-                        const elUnder = document.elementFromPoint(touch.clientX, touch.clientY);
-                        const col = elUnder ? elUnder.closest('.column') : null;
-                        if (col) {
-                            const newStatus = col.dataset.status;
-                            const job = jobs.find(j => j.id === touchDragData.id);
-                            if (job && job.status !== newStatus) {
-                                job.status = newStatus;
-                                saveData();
-                                render(document.getElementById('searchInput').value);
-                                showToast(`已移动到「${newStatus}」`);
-                            }
-                        }
-                    }
-                    touchClone.remove();
-                    touchClone = null;
-                }
-
-                touchDragData = null;
-                touchMoved = false;
-            });
         }
 
         function toggleSubStatus() {
